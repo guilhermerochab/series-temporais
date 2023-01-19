@@ -1,0 +1,141 @@
+```{r}
+install.packages("forecast")
+
+library("urca")
+library("forecast")
+```
+
+
+```{r}
+dados = read.csv('aod_-30_40.txt', sep = '\ ')
+
+sapply(dados, function(dados) sum(is.na(dados)))
+
+dados[220,]$X.2 = dados[220,]$X.3
+
+dados = dados[,c(2,4)]
+
+colnames(dados) = c('Mês', 'AOC')
+
+sum(is.na(dados))
+
+summary(dados)
+```
+
+```{r}
+ts = ts(dados$AOC, start=2003, frequency = 12)
+ts
+```
+
+```{r}
+boxplot(ts)
+```
+
+
+```{r}
+options(repr.plot.width=8, repr.plot.height=5)
+plot(ts,xlab="Tempo",ylab="AOC",main="Profundidade Óptica do Aerossol (AOC) a 550 nm")
+```
+
+```{r}
+qqnorm(ts, main="Q-Q Normal", xlab="Quantis Teóricos", ylab="Quantis da Amostra")
+qqline(ts)
+```
+
+
+```{r}
+hist(ts, main="Distribuição dos Dados", xlab = "AOC", ylab='Frequência')
+```
+
+```{r}
+shapiro.test(dados$AOC)
+```
+
+###Testes de Estacionaridade
+
+Teste KPSS (Kwiatkowski-Phillips-Schmidt-Shin)
+
+Ho = não é estacionária: teste estatístico > valor crítico
+Ha = estacionária: teste estatístico < valor crítico
+
+```{r}
+testeKpss = ur.kpss(ts)
+summary(testeKpss)
+```
+Teste Philips-Perron
+
+Ho = é estacionária: p > 0.05
+Ha = não é estacionária: p <= 0.05
+
+```{r}
+testePP = ur.pp(ts)
+summary(testePP)
+```
+
+Teste Dickey Fuller
+
+Ho = não é estacionária: teste estatístico > valor crítico
+Ha = estacionária: teste estatístico < valor crítico
+
+```{r}
+testeDF = ur.df(ts)
+summary(testeDF)
+```
+
+```{r}
+acf(ts)
+```
+
+```{r}
+pacf(ts)
+```
+
+Teste de Autocorrelação (Ljung-Box)
+Ho = não é autocorrelacionado: p > 0.05
+Ha = é autocorrelacionado: p <= 0.05
+```{r}
+Box.test(ts, type = "Ljung-Box")
+```
+
+```{r}
+plot(decompose(ts))
+```
+```{r}
+plot(decompose(ts, type="multiplicative"))
+```
+
+```{r}
+tsSuavizada = tsclean(ts)
+plot(ts)
+lines(tsSuavizada, col='Red')
+```
+##Tranformação e Diferenciação
+```{r}
+tsLog = log(ts)
+summary(tsLog)
+hist(tsLog)
+shapiro.test(tsLog)
+plot(tsLog)
+plot(decompose(tsLog))
+ppTesteLog = ur.pp(tsLog)
+summary(ppTesteLog)
+```
+
+```{r}
+tsCubica = ts^(1/3)
+summary(tsCubica)
+hist(tsCubica)
+shapiro.test(tsCubica)
+ppTestCubica = ur.pp(tsCubica)
+summary(ppTestCubica)
+```
+```{r}
+ndiffs(tsLog)
+```
+
+```{r}
+?ma
+mediaMovel = ma(ts, order=12)
+plot(mediaMovel, main="Média móvel simples de 12 meses", xlab="Tempo", ylab="AOC")
+```
+
